@@ -1,114 +1,84 @@
 import json
 import os
 import argparse
-import threading
-import datetime
 
-begintime = datetime.datetime.now()
-s1=threading.Semaphore(5)
-
-def outputFile(file_address, num):
-	s1.acquire()
+def	outputFile(dict_address):
 	Users = {}
 	Repos = {}
 	UsersAndRepos = {}
 	json_list = []
-	x = open(file_address, 'r', encoding = 'utf-8').read()
-	for line in x.split('\n'):
-		if(len(line)>0):
-			try:
-				i = json.loads(line)
-				EventType = i.get('type',0)
-				EventUser = i.get('actor',0).get('login',0)
-				EventRepo = i.get('repo',0).get('name',0)
-				if(not Users.get(EventUser)):
-					Users.update({EventUser: {}})
-				if(not Users[EventUser].get(EventType)):
-					Users[EventUser].update({EventType: 0})
-				Users[EventUser][EventType] += 1
+	for root, dic, files in os.walk(dict_address):
+		for f in files:
+			if(f[-5:] == '.json'):
+				x = open(dict_address + '\\' + f, 'r', encoding = 'utf-8').read()
+				for str in x.split('\n'):
+					if(len(str)>0):
+						try:
+							json_list.append(json.loads(str))
+						except:
+							pass
+	
+	for i in json_list:
+		EventType = i.get('type',0)
+		EventUser = i.get('actor',0).get('login',0)
+		EventRepo = i.get('repo',0).get('name',0)
 
-				if(not Repos.get(EventRepo)):
-					Repos.update({EventRepo: {}})
-				if(not Repos[EventRepo].get(EventType)):
-					Repos[EventRepo].update({EventType: 0})
-				Repos[EventRepo][EventType] += 1
+		if(not Users.get(EventUser)):
+			Users.update({EventUser: {}})
+		if(not Users[EventUser].get(EventType)):
+			Users[EventUser].update({EventType: 0})
+		Users[EventUser][EventType] += 1
 
+		if(not Repos.get(EventRepo)):
+			Repos.update({EventRepo: {}})
+		if(not Repos[EventRepo].get(EventType)):
+			Repos[EventRepo].update({EventType: 0})
+		Repos[EventRepo][EventType] += 1
 
-				if(not UsersAndRepos.get(EventUser)):
-					UsersAndRepos.update({EventUser: {}})
-				if(not UsersAndRepos[EventUser].get(EventRepo)):
-					UsersAndRepos[EventUser].update({EventRepo: {}})
-				if(not UsersAndRepos[EventUser][EventRepo].get(EventType)):
-					UsersAndRepos[EventUser][EventRepo].update({EventType: 0})
-				UsersAndRepos[EventUser][EventRepo][EventType] += 1
-			except:
-				pass
+		if(not UsersAndRepos.get(EventUser)):
+			UsersAndRepos.update({EventUser: {}})
+		if(not UsersAndRepos[EventUser].get(EventRepo)):
+			UsersAndRepos[EventUser].update({EventRepo: {}})
+		if(not UsersAndRepos[EventUser][EventRepo].get(EventType)):
+			UsersAndRepos[EventUser][EventRepo].update({EventType: 0})
+		UsersAndRepos[EventUser][EventRepo][EventType] += 1
 
-	with open('.\\output\\' + 'Users_' + str(num) + '.json', 'w', encoding='utf-8') as f:
+	with open('Users.json', 'w', encoding='utf-8') as f:
 		json.dump(Users,f)
-		f.close()
-
-	with open('.\\output\\' + 'Repos_' + str(num) + '.json', 'w', encoding='utf-8') as f:
+	with open('Repos.json', 'w', encoding='utf-8') as f:
 		json.dump(Repos,f)
-		f.close()
-	with open('.\\output\\' + 'UsersAndRepos_' + str(num) + '.json', 'w', encoding='utf-8') as f:
+	with open('UsersAndRepos.json', 'w', encoding='utf-8') as f:
 		json.dump(UsersAndRepos,f)
-		f.close()
-
-	Users = {}
-	Repos = {}
-	UsersAndRepos = {}
-	overtime = datetime.datetime.now()
-	print(overtime - begintime)
-	s1.release()
 
 def getEventsRepos(repo, event):
-	file_address = '.\\output'
-	num = 0
-	for root, dic, files in os.walk(file_address):
-		for file in files:
-			if(file[0:6] == 'Repos_'):
-				x = open(root + '\\' + file, 'r', encoding='utf-8').read()
-				f = json.loads(x)
-				if(not f.get(repo,0)):
-					pass
-				else:
-					num += f[repo].get(event,0)
-	print(num)
+	x = open('Repos.json', 'r', encoding='utf-8').read()
+	file = json.loads(x)
+	if(not file.get(repo,0)):
+		print("0")
+	else:
+		print(file[repo].get(event,0))
 
 def getEventsUsers(user, event):
-	file_address = '.\\output'
-	num = 0
-	for root, dic, files in os.walk(file_address):
-		for file in files:
-			if(file[0:6] == 'Users_'):
-				x = open(root + '\\' + file, 'r', encoding='utf-8').read()
-				f = json.loads(x)
-				if(not f.get(user,0)):
-					pass
-				else:
-					num += f[user].get(event,0)
-	print(num)
+	x = open('Users.json', 'r', encoding='utf-8').read()
+	file = json.loads(x)
+	if(not file.get(user,0)):
+		print("0")
+	else:
+		print(file[user].get(event,0))
 
 def getEventsUsersAndRepos(user, repo, event):
-	file_address = '.\\output'
-	num = 0
-	for root, dic, files in os.walk(file_address):
-		for file in files:
-			if(file[0:14] == 'UsersAndRepos_'):
-				x = open(root + '\\' + file, 'r', encoding='utf-8').read()
-				f = json.loads(x)
-				if(not f.get(user,0)):
-					print("0")
-				elif(not f[user].get(repo)):
-					print("0")
-				else:
-					num += f[user][repo].get(event,0)
-	print(num)
+	x = open('UsersAndRepos.json', 'r', encoding='utf-8').read()
+	file = json.loads(x)
+	if(not file.get(user,0)):
+		print("0")
+	elif(not file[user].get(repo)):
+		print("0")
+	else:
+		print(file[user][repo].get(event,0))
+
 
 class RunFirst:
 	def __init__(self):
-		self.num = 0
 		self.parser = argparse.ArgumentParser()
 		self.argInit()
 		self.analyse()
@@ -121,13 +91,7 @@ class RunFirst:
 
 	def analyse(self):
 		if(self.parser.parse_args().init):
-			for root, dic, files in os.walk(self.parser.parse_args().init):
-				for file in files:
-					if(file[-5:] == '.json'):
-						print(root + '\\' + file)
-						self.num += 1
-						t = threading.Thread(target=outputFile, args=(root + '\\' + file, self.num))
-						t.start()
+			outputFile(self.parser.parse_args().init)
 			return 0
 		else:
 			if(self.parser.parse_args().event):
@@ -138,9 +102,9 @@ class RunFirst:
 					else:
 						getEventsUsers(
 							self.parser.parse_args().user, self.parser.parse_args().event)
-				elif(self.parser.parse_args().repo):
+				elif (self.parser.parse_args().repo):
 					getEventsRepos(
-						self.parser.parse_args().repo, self.parser.parse_args().event)
+						self.parser.parse_args().reop, self.parser.parse_args().event)
 				else:
 					raise RuntimeError('error: argument -l or -c are required')
 					return 0
